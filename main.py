@@ -7,7 +7,8 @@ from re import search
 import pyodbc
 import time
 from pythonping import ping
-
+import lb_regex
+import ns_collector
 ###todo: NSSM CONF FOR PYTHON API SERVICE WILL BE ADDED LATER: DONE
 
 load_dotenv()
@@ -102,9 +103,9 @@ def send_alarmhistory(message):
 
 
 
-@bot.message_handler(commands=['getAlarmsByDate', 'getalarmsbydate'])
+@bot.message_handler(commands=['Help', 'help'])
 def send_hello_by_cron(message):
-    bot.send_message(chat_id=Chat_ID, text="Hello")
+    bot.send_message(chat_id=Chat_ID, text="Uygulama Yönetimi Ekibinin yardımsever botuna hoş geldiniz. \nKomutlar ve örnek kullanımları aşağıdaki gibidir.\nEkiplerin mevcut alarmlarını görmek için /getalarms <Responsible>\nSon Değerleri görmek için /getLastValue <alarm id>\nPing atmak için /ping <site adı>\n/learnlbname <lb>\n/learnservers <correct_lb>")
 
 @bot.message_handler(commands=['ping', 'Ping'])
 def send_ping(message):
@@ -112,10 +113,33 @@ def send_ping(message):
         ping_adress = message.text.split(" ")[1]
         ping_response = ping(str(ping_adress), verbose=False, count=1, size=1, interval=1,timeout=10)
         ping_text = str(ping_response)
-        bot.send_message(chat_id=Chat_ID, text=ping_text)
+        start_index = ping_text.find("from ") + len("from ")
+        end_index = ping_text.find(",", start_index)
+        ip_address = ping_text[start_index:end_index]
+        bot.send_message(chat_id=Chat_ID, text=ping_text+"\n"+ip_address)
     except:
         bot.send_message(chat_id=Chat_ID, text="Hata")
 
+
+@bot.message_handler(commands=['Learnlbname', 'learnlbname'])
+def CorrectLB_fromLB(message):
+    try:
+        target_LB= message.text.split(" ")[1]
+        lb_expand_name = lb_regex.lb_name_finder(target_LB)
+        bot.send_message(chat_id=Chat_ID, text=lb_expand_name)
+
+    except:
+        bot.send_message(chat_id=Chat_ID, text="LB'de Hata bulundu. Lütfen LB'yi kontrol ediniz veya komutu doğru yazınız\n Komut: /learnservers <LB>")
+
+@bot.message_handler(commands=['learnservers', 'Learnservers'])
+def servernames_fromLB(message):
+    try:
+        target_servers = message.text.split(" ")[1]
+        servers_expand_name = ns_collector.getServersfromNS(target_servers)
+
+        bot.send_message(chat_id=Chat_ID, text=servers_expand_name)
+    except:
+        bot.send_message(chat_id=Chat_ID, text="LB'de Hata bulundu. Lütfen LB'yi kontrol ediniz veya komutu doğru yazınız\n Komut: /learnservers <LB>")
 if __name__ == '__main__':
 
     bot.polling(
