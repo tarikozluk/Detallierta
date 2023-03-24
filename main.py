@@ -9,6 +9,8 @@ import time
 from pythonping import ping
 import lb_regex
 import ns_collector
+from database_logging import sql_error_logging
+
 ###todo: NSSM CONF FOR PYTHON API SERVICE WILL BE ADDED LATER: DONE
 
 load_dotenv()
@@ -39,6 +41,7 @@ def send_lastvalue(message):
         bot.send_message(chat_id=Chat_ID, text="Son Değer: "+lastvalue)
     except:
         bot.send_message(chat_id=Chat_ID, text="Son Değer Bulunamadı")
+        sql_error_logging.sql_error_logs(message)
 @bot.message_handler(commands=['getAlarms', 'getalarms'])
 def send_alarmhistory(message):
     try:
@@ -99,7 +102,7 @@ def send_alarmhistory(message):
 
     except:
         bot.send_message(chat_id=Chat_ID, text="Lütfen Sorumlu Ekibi giriniz. Örnek: /getAlarms ResponsibleTeam")
-
+        sql_error_logging.sql_error_logs(message)
 
 
 
@@ -119,6 +122,7 @@ def send_ping(message):
         bot.send_message(chat_id=Chat_ID, text=ping_text+"\n"+ip_address)
     except:
         bot.send_message(chat_id=Chat_ID, text="Hata")
+        sql_error_logging.sql_error_logs(message)
 
 
 @bot.message_handler(commands=['Learnlbname', 'learnlbname'])
